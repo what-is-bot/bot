@@ -1,7 +1,7 @@
 package main
 
-import rootCmd "github.com/what-is-bot/bot/cmd/bot/cmd"
+import "github.com/what-is-bot/bot/cmd/bot/cmd"
 
 func main() {
-	rootCmd.Execute()
+	cmd.Execute()
 }
