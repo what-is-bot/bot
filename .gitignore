@@ -20,3 +20,5 @@ out/
 
 # MacOS
 .DS_Store
+
+token.json

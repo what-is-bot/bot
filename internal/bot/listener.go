@@ -21,6 +21,7 @@ func Start() {
 	go rtm.ManageConnection()
 
 	matcher := NewBasicQuestionMatcher()
+	answerProvider := NewGoogleSheetAnswerProvider(defaultSheetsService())
 
 	for msg := range rtm.IncomingEvents {
 		fmt.Print("Event Received: ")
@@ -39,8 +40,16 @@ func Start() {
 			question, err := matcher.Match(ev.Msg.Text)
 			if err != nil {
 				fmt.Println(err)
-			} else {
-				fmt.Printf("Question term: [%s]\n", question.Term)
+				break
+			}
+			if question != NoQuestion {
+				ans, err := answerProvider.Ask(question)
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, a := range ans {
+					log.Printf("answer: %s, score: %d", a.Text, a.Score)
+				}
 			}
 
 		case *slack.PresenceChangeEvent:
