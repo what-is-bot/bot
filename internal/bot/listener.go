@@ -21,7 +21,7 @@ func Start() {
 	go rtm.ManageConnection()
 
 	matcher := NewBasicQuestionMatcher()
-	answerProvider := NewGoogleSheetAnswerProvider(defaultSheetsService())
+	answerProvider := googlesheet.NewAnswerProvider()
 
 	for msg := range rtm.IncomingEvents {
 		fmt.Print("Event Received: ")

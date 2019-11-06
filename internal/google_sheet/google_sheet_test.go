@@ -1,13 +1,17 @@
 // +build integration
 
-package bot
+package googlesheet
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/what-is-bot/bot/internal/bot"
+)
 
 func TestGoogleSheetAnswerProvider_Ask(t *testing.T) {
-	answerProvider := NewGoogleSheetAnswerProvider(defaultSheetsService())
+	answerProvider := NewAnswerProvider(defaultSheetsService())
 
-	question := Question{Term: "teste"}
+	question := bot.Question{Term: "teste"}
 	answers, err := answerProvider.Ask(question)
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
@@ -18,18 +22,18 @@ func TestGoogleSheetAnswerProvider_Ask(t *testing.T) {
 }
 
 func TestGoogleSheetFeedbackProvider_Upvote(t *testing.T) {
-	feedbackProvider := NewGoogleSheetFeedbackProvider(defaultSheetsService())
+	feedbackProvider := NewFeedbackProvider(defaultSheetsService())
 
-	err := feedbackProvider.Upvote(Answer{ID: "2"})
+	err := feedbackProvider.Upvote(bot.Answer{ID: "2"})
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
 	}
 }
 
 func TestGoogleSheetFeedbackProvider_Downvote(t *testing.T) {
-	feedbackProvider := NewGoogleSheetFeedbackProvider(defaultSheetsService())
+	feedbackProvider := NewFeedbackProvider(defaultSheetsService())
 
-	err := feedbackProvider.Downvote(Answer{ID: "2"})
+	err := feedbackProvider.Downvote(bot.Answer{ID: "2"})
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
 	}

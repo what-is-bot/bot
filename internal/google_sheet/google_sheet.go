@@ -1,35 +1,37 @@
-package bot
+package googlesheet
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/sheets/v4"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
 	"strconv"
+
+	"github.com/mitchellh/go-homedir"
+	"github.com/what-is-bot/bot/internal/bot"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/sheets/v4"
 )
 
 const (
-	sheetId = "10IwyKQ4qd8eyeqd-VGI5bvJjy28Wu2Ja6VcUtEogLuE"
+	sheetID = "10IwyKQ4qd8eyeqd-VGI5bvJjy28Wu2Ja6VcUtEogLuE"
 )
 
-type googleSheetFeedbackProvider struct {
+type feedbackProvider struct {
 	srv *sheets.Service
 }
 
-func (g *googleSheetFeedbackProvider) Upvote(answer Answer) error {
+func (g *feedbackProvider) Upvote(answer bot.Answer) error {
 	rowIndex, _ := strconv.Atoi(answer.ID)
 	return writeVote(g.srv, rowIndex, 1)
 }
 
-func (g *googleSheetFeedbackProvider) Downvote(answer Answer) error {
+func (g *feedbackProvider) Downvote(answer bot.Answer) error {
 	rowIndex, _ := strconv.Atoi(answer.ID)
 	return writeVote(g.srv, rowIndex, -1)
 }
@@ -63,7 +65,7 @@ func writeValue(srv *sheets.Service, rowIndex int, values []interface{}) error {
 		Values:         [][]interface{}{values},
 	}
 	_, err := srv.Spreadsheets.Values.
-		Update(sheetId, rng, &valueRange).
+		Update(sheetID, rng, &valueRange).
 		ValueInputOption("USER_ENTERED").
 		Do()
 	if err != nil {
@@ -73,7 +75,7 @@ func writeValue(srv *sheets.Service, rowIndex int, values []interface{}) error {
 }
 
 func readValue(srv *sheets.Service, rowIndex int) ([]interface{}, error) {
-	resp, err := srv.Spreadsheets.Values.Get(sheetId, fmt.Sprintf("answers!A%d:D%d", rowIndex, rowIndex)).Do()
+	resp, err := srv.Spreadsheets.Values.Get(sheetID, fmt.Sprintf("answers!A%d:D%d", rowIndex, rowIndex)).Do()
 	if err != nil {
 		return nil, err
 	}
@@ -81,16 +83,16 @@ func readValue(srv *sheets.Service, rowIndex int) ([]interface{}, error) {
 	return resp.Values[0], nil
 }
 
-func NewGoogleSheetFeedbackProvider(srv *sheets.Service) FeedbackProvider {
-	return &googleSheetFeedbackProvider{srv: srv}
+func NewFeedbackProvider(srv *sheets.Service) bot.FeedbackProvider {
+	return &feedbackProvider{srv: srv}
 }
 
-type googleSheetAnswerProvider struct {
+type answerProvider struct {
 	srv *sheets.Service
 }
 
-func (g *googleSheetAnswerProvider) Ask(question Question) ([]Answer, error) {
-	resp, err := g.srv.Spreadsheets.Values.Get(sheetId, "answers!A2:D").Do()
+func (g *answerProvider) Ask(question bot.Question) ([]bot.Answer, error) {
+	resp, err := g.srv.Spreadsheets.Values.Get(sheetID, "answers!A2:D").Do()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -103,12 +105,12 @@ func (g *googleSheetAnswerProvider) Ask(question Question) ([]Answer, error) {
 	return answers, nil
 }
 
-func filterValues(rows [][]interface{}, predicate func(term string) bool) []Answer {
-	var result []Answer
+func filterValues(rows [][]interface{}, predicate func(term string) bool) []bot.Answer {
+	var result []bot.Answer
 	for idx, row := range rows {
 		if predicate(row[0].(string)) {
 			score, _ := strconv.Atoi(row[3].(string))
-			result = append(result, Answer{
+			result = append(result, bot.Answer{
 				ID:     strconv.Itoa(idx + 2),
 				Text:   row[1].(string),
 				Author: row[2].(string),
@@ -144,8 +146,8 @@ func defaultSheetsService() *sheets.Service {
 	return srv
 }
 
-func NewGoogleSheetAnswerProvider(srv *sheets.Service) AnswerProvider {
-	return &googleSheetAnswerProvider{srv}
+func NewAnswerProvider(srv *sheets.Service) bot.AnswerProvider {
+	return &answerProvider{srv}
 }
 
 // Retrieve a token, saves the token, then returns the generated client.

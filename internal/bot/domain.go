@@ -1,10 +1,11 @@
 package bot
 
 import (
-	"golang.org/x/text/transform"
-	"golang.org/x/text/unicode/norm"
 	"strings"
 	"unicode"
+
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 )
 
 type Question struct {
@@ -12,6 +13,17 @@ type Question struct {
 }
 
 var NoQuestion = Question{Term: string(rune(21))} // 21 is the NAK ASCII character
+
+type Answer struct {
+	ID     string
+	Text   string
+	Author string
+	Score  int
+}
+
+type AnswerProvider interface {
+	Ask(Question) ([]Answer, error)
+}
 
 type QuestionMatcher interface {
 	Match(msg string) (Question, error)
@@ -51,4 +63,16 @@ func NewBasicQuestionMatcher() QuestionMatcher {
 		greetings: []string{"que e", "que seria", "what is", "what's"},
 		t:         transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC),
 	}
+}
+
+type FeedbackProvider interface {
+	Upvote(Answer) error
+	Downvote(Answer) error
+}
+
+type Controller struct {
+}
+
+func (c *Controller) Init() {
+
 }
