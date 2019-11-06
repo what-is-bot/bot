@@ -1,4 +1,4 @@
-package bot
+package internal
 
 import (
 	"strings"
@@ -73,6 +73,6 @@ type FeedbackProvider interface {
 type Controller struct {
 }
 
-func (c *Controller) Init() {
+func (c *Controller) Listen() {
 
 }
