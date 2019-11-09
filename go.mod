@@ -4,9 +4,11 @@ go 1.13
 
 require (
 	cloud.google.com/go v0.47.0 // indirect
+	github.com/golang-migrate/migrate v3.5.4+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/lib/pq v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/nlopes/slack v0.6.0
