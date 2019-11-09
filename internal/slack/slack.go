@@ -1,16 +1,18 @@
 package slack
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/nlopes/slack"
 	"github.com/spf13/viper"
+	"github.com/what-is-bot/bot/internal"
 )
 
-func Start() {
-	slackToken := viper.GetString("slack.token")
+func Start(c internal.Controller) {
+	slackToken := viper.GetString("slack_token")
 	fmt.Printf("Slack token %s \n", slackToken)
 
 	api := slack.New(slackToken,
@@ -25,12 +27,17 @@ func Start() {
 		switch ev := msg.Data.(type) {
 		case *slack.HelloEvent:
 			// Ignore hello
+			rtm.SendMessage(rtm.NewOutgoingMessage("Hello world", "GQE33K0R4"))
 
 		case *slack.ConnectedEvent:
 			fmt.Println("Infos:", ev.Info)
 			fmt.Println("Connection counter:", ev.ConnectionCount)
 			// Replace C2147483705 with your Channel ID
-			rtm.SendMessage(rtm.NewOutgoingMessage("Hello world", "C2147483705"))
+			rtm.SendMessage(rtm.NewOutgoingMessage("Hello world", "GQE33K0R4"))
+
+		case *slack.ReactionAddedEvent:
+			fmt.Println("Infos:", ev.Item)
+			fmt.Println("Reaction: ", ev.Reaction)
 
 		case *slack.MessageEvent:
 			fmt.Printf("Message: %v\n", ev)
@@ -54,4 +61,9 @@ func Start() {
 			// fmt.Printf("Unexpected: %v\n", msg.Data)
 		}
 	}
+}
+
+type channelWriter struct {
+	*bytes.Buffer
+	channel string
 }

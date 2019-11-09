@@ -1,6 +1,9 @@
 package internal
 
 import (
+	"encoding/json"
+	"io"
+	"log"
 	"strings"
 	"unicode"
 
@@ -15,10 +18,10 @@ type Question struct {
 var NoQuestion = Question{Term: string(rune(21))} // 21 is the NAK ASCII character
 
 type Answer struct {
-	ID     string
-	Text   string
-	Author string
-	Score  int
+	ID     string `json:"id"`
+	Text   string `json:"text"`
+	Author string `json:"author"`
+	Score  int    `json:"score"`
 }
 
 type AnswerProvider interface {
@@ -70,9 +73,58 @@ type FeedbackProvider interface {
 	Downvote(Answer) error
 }
 
-type Controller struct {
+type Controller interface {
+	Answer(msg string, out io.Writer) error
+	Upvote(Answer) error
+	Downvote(Answer) error
 }
 
-func (c *Controller) Listen() {
+type controller struct {
+	qMatcher  QuestionMatcher
+	aProvider AnswerProvider
+	fProvider FeedbackProvider
+}
 
+func (c *controller) Answer(msg string, out io.Writer) error {
+	jsonOut := json.NewEncoder(out)
+	question, err := c.qMatcher.Match(msg)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return err
+	}
+
+	if question == NoQuestion {
+		log.Println("no question")
+		return nil
+	}
+
+	answers, err := c.aProvider.Ask(question)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return err
+	}
+
+	err = jsonOut.Encode(answers)
+	if err != nil {
+		log.Printf("error: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *controller) Upvote(answer Answer) error {
+	return c.fProvider.Upvote(answer)
+}
+
+func (c *controller) Downvote(answer Answer) error {
+	return c.fProvider.Downvote(answer)
+}
+
+func NewController(provider AnswerProvider, fProvider FeedbackProvider) Controller {
+	return &controller{
+		qMatcher:  NewBasicQuestionMatcher(),
+		aProvider: provider,
+		fProvider: fProvider,
+	}
 }
