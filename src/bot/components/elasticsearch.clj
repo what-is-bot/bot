@@ -1,18 +1,24 @@
 (ns bot.components.elasticsearch
-  (:require [bot.protocols.config :as c-pro]
-            [bot.protocols.db :as db-pro]
-            [bot.utils :as utils]
+  (:require [bot.protocols.config :as protocols.config]
+            [bot.protocols.faq :as protocols.faq]
+            [bot.schema.question :as schema.question]
             [clojure.tools.logging :refer [debug error]]
             [com.stuartsierra.component :as component]
-            [qbits.spandex :as sp]))
+            [qbits.spandex :as sp]
+            [schema.core :as s])
+  (:import org.elasticsearch.client.RestClient))
 
-(defonce ^:private index :entries)
-(defonce ^:private index-mapping {:properties {:question {:type :text}
-                                               :answers  {:type       :nested
-                                                          :properties {:text      {:type :text}
-                                                                       :upvotes   {:type :integer}
-                                                                       :downvotes {:type :integer}
-                                                                       :score     {:type :integer}}}}})
+(defonce ^:private index :questions)
+;; research about parent/child mapping
+;; https://www.elastic.co/blog/managing-relations-inside-elasticsearch
+(defonce ^:private index-mapping {:properties {:text        {:type :text}
+                                               :asked-by-id {:type  :keyword
+                                                             :index false}
+                                               :answers     {:type       :nested
+                                                             :properties {:text      {:type :text}
+                                                                          :upvotes   {:type :integer}
+                                                                          :downvotes {:type :integer}
+                                                                          :score     {:type :integer}}}}})
 (defn- index-exist? [client]
   (try
     (sp/request client {:method :get
@@ -29,33 +35,24 @@
                                           :url    [index]
                                           :body   {:mappings index-mapping}}))))
 
-(defn- insert*! [client document]
-  (debug "Inserting..." (sp/request client {:method :post
-                                            :url    [index :_doc]
-                                            :body   document})))
+(s/defn ^:private ask :- schema.question/Question
+  [client :- RestClient
+   question :- schema.question/Question])
 
-(defn- update*! [client {:keys [id _id] :as document}]
-  {:pre [(some? (or id, _id))]}
-  (let [id (or id _id)]
-    (debug "Updating..." (sp/request client {:method :post
-                                             :url    [index :_update id]
-                                             :body   (dissoc document :id :_id)}))))
-
-(defrecord ElasticSearch [config client]
-  db-pro/Db
-  (insert! [this document]
-    (insert*! (:client this) document))
-  (update! [this document]
-    (update*! (:client this) document))
-  (upvote! [this document-id])
-  (upvote! [this document-id qty])
-  (downvote! [this document-id])
-  (downvote! [this document-id qty])
-  (query [this question])
+(s/defrecord ElasticSearch [config :- protocols.config/Config
+                            client :- RestClient]
+  protocols.faq/Faq
+  (ask! [this question])
+  (query [this & {:keys [text asked-by answered-by] :as args}])
+  (answer! [this question answer])
+  (upvote! [this answer who])
+  (upvote! [this answer who delta])
+  (downvote! [this answer who])
+  (downvote! [this answer who delta])
 
   component/Lifecycle
   (start [this]
-    (let [hosts  (c-pro/get! config [:elasticsearch :hosts])
+    (let [hosts  (protocols.config/get! config [:elasticsearch :hosts])
           client (sp/client {:hosts hosts})
           component (assoc this :client client)]
       (setup-indexes! client)

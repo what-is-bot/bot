@@ -7,6 +7,7 @@
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/tools.logging "1.1.0"]
                  [ch.qos.logback/logback-classic "1.1.3"]
+                 [prismatic/schema "1.1.12"]
 
                  [com.stuartsierra/component "1.0.0"]
                  [yogthos/config "1.1.7"]
@@ -20,7 +21,7 @@
              :dev     {:resource-paths ["config/dev"]
                        :injections     [(require '[bot.components :as c])]
                        :dependencies   [[clj-kondo "2020.04.05"]]
-                       :repl-options   {:init-ns user}}
+                       :repl-options   {:init-ns bot.components}}
 
              :repl-start {:repl-options {:prompt  #(str "[bot] " % "=> ")
                                          :timeout 300000
