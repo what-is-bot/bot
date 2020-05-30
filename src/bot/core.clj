@@ -2,5 +2,5 @@
   (:gen-class)
   (:require [bot.components :as components]))
 
-(defn -main [&]
+(defn -main [& _]
   (components/create-and-start-system!))

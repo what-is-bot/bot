@@ -3,8 +3,8 @@
             [bot.schema.user :as schema.user]
             [schema.core :as s]))
 
-(s/defschema Question {:id         s/Uuid
-                       :created-at s/Inst
-                       :asked-by   schema.user/User
-                       :text       s/Str
-                       :answers    [schema.answer/Answer]})
+(s/defschema Question {(s/optional-key :id)         s/Uuid
+                       (s/optional-key :created-at) s/Inst
+                       (s/optional-key :asked-by)   schema.user/User
+                       :text                        s/Str
+                       (s/optional-key :answers)    [schema.answer/Answer]})

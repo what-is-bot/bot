@@ -3,7 +3,8 @@
             [bot.system :as system]
             [com.stuartsierra.component :as component]
             [bot.components.elasticsearch :as elasticsearch]
-            [clojure.tools.logging :refer [debug]]))
+            [clojure.tools.logging :refer [debug]]
+            [bot.protocols.faq :as p-faq]))
 
 (defn system-map []
   (component/system-map
@@ -17,3 +18,10 @@
 (defn restart-system! []
   (system/destroy!)
   (create-and-start-system!))
+
+(defn test! []
+  (let [sys               (restart-system!)
+        es                (:db sys)
+        question          (p-faq/ask! es {:text "questão"})
+        answer            {:text "resposta"}]
+    (p-faq/answer! es question answer)))

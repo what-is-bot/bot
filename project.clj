@@ -6,9 +6,10 @@
 
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [org.clojure/tools.logging "1.1.0"]
+
                  [ch.qos.logback/logback-classic "1.1.3"]
                  [prismatic/schema "1.1.12"]
-
+                 [danlentz/clj-uuid "0.1.9"]
                  [com.stuartsierra/component "1.0.0"]
                  [yogthos/config "1.1.7"]
                  [cc.qbits/spandex "0.7.4"]]
@@ -19,7 +20,8 @@
              :prod    {:resource-paths ["config/prod"]}
              :test    {:dependencies [[clojure.test "1.10.1"]]}
              :dev     {:resource-paths ["config/dev"]
-                       :injections     [(require '[bot.components :as c])]
+                       :injections     [(require '[bot.components :as c])
+                                        (require '[bot.utils :as bot])]
                        :dependencies   [[clj-kondo "2020.04.05"]]
                        :repl-options   {:init-ns bot.components}}
 
